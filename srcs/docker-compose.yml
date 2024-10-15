@@ -1,80 +1,73 @@
-version: '3.9'
+version: '3.8'
 
 services:
   mariadb:
+    build: ./requirements/mariadb/.
+    image: mariadb:PiPe
     container_name: mariadb
-    build: ./requirements/mariadb
     restart: always
-    env_file: .env
+    env_file:
+      - .env
     volumes:
-      - db:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
     networks:
-      - project
+      - inception
 
   wordpress:
+    build: ./requirements/wordpress/.
+    image: wordpress:PiPe
     container_name: wordpress
-    build: ./requirements/wordpress
-    env_file: .env
+    restart: always
+    env_file:
+      - .env
     volumes:
-      - wp:/var/www/html/wordpress
+      - wordpress_data:/var/www/html
     networks:
-      - project
+      - inception
     depends_on:
       - mariadb
+      - redis
 
   nginx:
+    build: ./requirements/nginx/.
+    image: nginx:PiPe
     container_name: nginx
-    build: ./requirements/nginx
-    hostname: localhost
-    volumes:
-      - wp:/var/www/html/wordpress
-    networks:
-      - project
-    depends_on:
-      - wordpress
+    restart: always
     ports:
       - "443:443"
-
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    ports:
-      - "8000:8000"
-      - "9443:9443"
     volumes:
-      - "/etc/localtime:/etc/localtime:ro"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    security_opt:
-      - no-new-privileges:true
-    restart: always
-  
-  adminer:
-    image: adminer:4
-    container_name: adminer
-    restart: unless-stopped
+      - wordpress_data:/var/www/html
     networks:
-      - project
+      - inception
     depends_on:
-      - mariadb
-    ports:
-      - "9000:8080"
+      - wordpress
+    env_file:
+      - .env
+
+  redis:
+    build: ./requirements/redis/.
+    image: redis:PiPe
+    container_name: redis
+    restart: always
+    networks:
+      - inception
+    env_file:
+      - .env
 
 volumes:
-  db:
-    name: db
+  mariadb_data:
     driver: local
     driver_opts:
       type: none
+      device: /home/mdoulahi/data/mariadb
       o: bind
-      device: /home/${USER}/data/db
-  wp:
-    name: wp
+  wordpress_data:
     driver: local
     driver_opts:
       type: none
+      device: /home/mdoulahi/data/wordpress
       o: bind
-      device: /home/${USER}/data/wp
 
 networks:
-  project:
+  inception:
     driver: bridge

@@ -1,27 +1,17 @@
-FROM debian:buster
+FROM debian:bullseye
 
-EXPOSE 9000
+RUN apt-get update && apt-get install php php7.4-fpm php-mysqli php-redis wget -y  && service php7.4-fpm start 
 
-RUN apt-get update && apt-get install -y \
-	php7.3-fpm \
-	php7.3-mysql \
-	mariadb-client \
-	curl && \
-	rm -rf /var/lib/apt/lists/*
+RUN mkdir /workspace
 
-COPY ./conf/www.conf /etc/php/7.3/fpm/pool.d
+WORKDIR /workspace
 
-ADD https://wordpress.org/latest.tar.gz /var/www/latest.tar.gz
+COPY ./conf/www.conf /etc/php/7.4/fpm/pool.d/.
 
-RUN cd /var/www && tar -xvf latest.tar.gz && \
-	rm -rf latest.tar.gz
+COPY ./tools/installer.sh .
 
-RUN curl https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar --output /usr/bin/wp --silent
 
-RUN chmod +x ./usr/bin/wp
+RUN chmod +x installer.sh
 
-RUN mkdir /run/php
+CMD ["./installer.sh"]
 
-COPY ./conf/config.sh /var/www/wordpress/config.sh
-RUN chmod +x /var/www/wordpress/config.sh
-CMD ["bash", "/var/www/wordpress/config.sh"]
