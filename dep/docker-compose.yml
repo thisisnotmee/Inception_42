@@ -1,0 +1,12 @@
+services:
+  nginx:
+    image: nginx
+    build: ./dep/nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+  wordpress:
+    image: wordpress
+    build: ./dep/wordpress
+    container_name: wp-php
+
